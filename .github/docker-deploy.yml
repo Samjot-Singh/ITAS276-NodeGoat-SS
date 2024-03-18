@@ -1,3 +1,11 @@
+# This updated YAML file will:
+
+# Check out the repository.
+# Install Docker on the runner.
+# Build the Docker image for NodeGoat.
+# Start a Docker container with the built image.
+# Test the deployment by displaying the username and listing the running Docker containers.
+
 name: Build and deploy NodeGoat to WMD Docker servers
 
 on:
