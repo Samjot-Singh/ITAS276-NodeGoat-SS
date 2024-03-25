@@ -16,7 +16,7 @@ on:
 
 jobs:
   deploy_and_scan:
-    name: Deploy and Scan on WMD server
+    name: Build, deploy, and scan NodeGoat on WMD server
     runs-on: itas276-SamjotSingh
 
     steps:
@@ -54,7 +54,7 @@ jobs:
       - name: Save TruffleHog Report as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: trufflehog-report
+          name: trufflehog-scan-report
           path: trufflehog-report.json
 
       - name: Install Semgrep
@@ -70,7 +70,7 @@ jobs:
       - name: Save Semgrep SARIF Report as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: semgrep-sarif-report
+          name: semgrep-scan-report
           path: sast-report.sarif
 
       - name: Install Snyk
@@ -86,7 +86,8 @@ jobs:
       - name: Save Snyk SARIF Report as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: snyk-sarif-report
+          name: snyk-scan-report
           path: snyk-report.sarif
+
 
 
