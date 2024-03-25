@@ -6,7 +6,7 @@
 # Start a Docker container with the built image.
 # Test the deployment by displaying the username and listing the running Docker containers.
 
-name: Build and deploy NodeGoat to WMD Docker servers
+name: Build, deploy, and scan NodeGoat on WMD Docker servers
 
 on:
   push:
@@ -15,8 +15,8 @@ on:
     branches: [ "master" ]
 
 jobs:
-  deploy:
-    name: "Deploy to ITAS WMD server"
+  deploy_and_scan:
+    name: Deploy and Scan on WMD server
     runs-on: itas276-SamjotSingh
 
     steps:
@@ -40,3 +40,20 @@ jobs:
         run: |
           whoami
           docker ps
+
+      - name: Install Semgrep
+        run: |
+          curl -L https://semgrep.dev/install.sh | bash
+
+      - name: Run Semgrep SAST Scan
+        run: |
+          semgrep --sarif sast-report.sarif .
+
+      - name: Install Snyk
+        run: |
+          npm install -g snyk
+
+      - name: Run Snyk SCA Scan
+        run: |
+          snyk test --all-projects --sarif -o snyk-report.sarif
+
