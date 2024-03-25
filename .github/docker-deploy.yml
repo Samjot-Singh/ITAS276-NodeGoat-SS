@@ -81,11 +81,12 @@ jobs:
       - name: Run Snyk SCA Scan
         run: |
           echo "Running Snyk SCA Scan..."
-          snyk test --all-projects --sarif -o snyk-report.sarif
+          snyk test --all-projects --sarif -o snyk-report.sarif --token=1acc1c7a-6467-47bb-8756-7919cd0fd7a5
 
       - name: Save Snyk SARIF Report as Artifact
         uses: actions/upload-artifact@v2
         with:
           name: snyk-sarif-report
           path: snyk-report.sarif
+
 
