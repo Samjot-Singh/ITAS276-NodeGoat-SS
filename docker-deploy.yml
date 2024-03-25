@@ -1,0 +1,92 @@
+name: Build, deploy, and scan NodeGoat on WMD Docker servers
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  SAST-Semgrep:
+    name: SAST Semgrep Scan
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:   
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Run Semgrep SAST scan
+        run: |
+          semgrep \
+          --sarif --output semgrep-sast-report.sarif \
+          --config="p/default" \
+          --exclude="node_modules/*"
+      - name: Save Semgrep SAST report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-sast-report
+          path: semgrep-sast-report.sarif
+
+  SCA-Snyk:
+    name: SCA Scan with Snyk
+    runs-on: itas276-SamjotSingh
+    container:
+      image: snyk/snyk-cli:docker
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate with Snyk
+        run: snyk auth "3280d6a3-2a71-4aba-8f44-9c6debcec093"
+
+      - name: Run Snyk SCA scan
+        run: |
+          snyk test --all-projects --json > snyk-sca-report.json || true
+      - name: Convert Snyk SCA JSON report to SARIF
+        run: |
+          npm install -g snyk-to-sarif
+          snyk-to-sarif --input snyk-sca-report.json --output snyk-sca-report.sarif
+      - name: Save Snyk SCA report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-sca-report
+          path: snyk-sca-report.sarif
+
+  TruffleHog:
+    name: TruffleHog Scan
+    runs-on: itas276-SamjotSingh
+    needs: [SAST-Semgrep, SCA-Snyk]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install TruffleHog
+        run: pip install trufflehog
+
+      - name: Run TruffleHog Scan
+        run: trufflehog .
+        continue-on-error: true
+        # This continues the workflow even if trufflehog fails
+
+      - name: Save TruffleHog report as pipeline artifact
+        run: trufflehog . > trufflehog-report.txt
+        continue-on-error: true
+        # This continues the workflow even if trufflehog fails
+
+      - name: Save TruffleHog report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trufflehog-report
+          path: trufflehog-report.txt
+
+  SARIF-Viewer:
+    name: SARIF Report Viewer
+    runs-on: itas276-SamjotSingh
+    needs: [SAST-Semgrep, SCA-Snyk, TruffleHog]
+    steps:
+      - name: Download Semgrep SAST report
+        uses: actions/download-artifact@v2
+        with:
+          name: semgrep-sast-report
+          path: sarif-reports
