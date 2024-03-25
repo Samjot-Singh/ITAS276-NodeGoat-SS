@@ -6,86 +6,61 @@ on:
       - main
 
 jobs:
-  SAST-Semgrep:
-    name: SAST Semgrep Scan
+  snyk_scan:
     runs-on: ubuntu-latest
-    container:
-      image: returntocorp/semgrep
-    steps:   
-      - name: Checkout source code
-        uses: actions/checkout@v3
-
-      - name: Run Semgrep SAST scan
-        run: |
-          semgrep \
-          --sarif --output semgrep-sast-report.sarif \
-          --config="p/default" \
-          --exclude="node_modules/*"
-      - name: Save Semgrep SAST report as pipeline artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: semgrep-sast-report
-          path: semgrep-sast-report.sarif
-
-  SCA-Snyk:
-    name: SCA Scan with Snyk
-    runs-on: ubuntu-latest
-    container:
-      image: snyk/snyk-cli:docker
+    needs: [trufflehog_scan, semgrep_scan]
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Authenticate with Snyk
-        run: snyk auth "3280d6a3-2a71-4aba-8f44-9c6debcec093"
+      - name: Build a Docker image
+        run: docker build -t / .
 
-      - name: Run Snyk SCA scan
-        run: |
-          snyk test --all-projects --json > snyk-sca-report.json || true
-      - name: Convert Snyk SCA JSON report to SARIF
-        run: |
-          npm install -g snyk-to-sarif
-          snyk-to-sarif --input snyk-sca-report.json --output snyk-sca-report.sarif
-      - name: Save Snyk SCA report as pipeline artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: snyk-sca-report
-          path: snyk-sca-report.sarif
-
-  TruffleHog:
-    name: TruffleHog Scan
-    runs-on: ubuntu-latest
-    needs: [SAST-Semgrep, SCA-Snyk]
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-
-      - name: Install TruffleHog
-        run: pip install trufflehog
-
-      - name: Run TruffleHog Scan
-        run: trufflehog .
+      - name: Run Snyk to check Docker image for vulnerabilities
         continue-on-error: true
-        # This continues the workflow even if trufflehog fails
-
-      - name: Save TruffleHog report as pipeline artifact
-        run: trufflehog . > trufflehog-report.txt
-        continue-on-error: true
-        # This continues the workflow even if trufflehog fails
-
-      - name: Save TruffleHog report as pipeline artifact
-        uses: actions/upload-artifact@v3
+        uses: snyk/actions/docker@master
         with:
-          name: trufflehog-report
-          path: trufflehog-report.txt
+          image: /
+          args: --file=Dockerfile --sarif-file-output=snyk.sarif
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-  SARIF-Viewer:
-    name: SARIF Report Viewer
+      - name: Upload SARIF report as an artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk.sarif
+          path: snyk.sarif
+
+  trufflehog_scan:
     runs-on: ubuntu-latest
-    needs: [SAST-Semgrep, SCA-Snyk, TruffleHog]
+    needs: build
     steps:
-      - name: Download Semgrep SAST report
-        uses: actions/download-artifact@v2
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: TruffleHog Action
+        uses: trufflesecurity/trufflehog@v3.0.1
         with:
-          name: semgrep-sast-report
-          path: sarif-reports
+          scanArguments: "--format sarif --output trufflehog-report.sarif"
+
+      - name: Upload SARIF report
+        uses: actions/upload-artifact@v2
+        with:
+          name: trufflehog-sarif-report
+          path: trufflehog-report.sarif
+
+  semgrep_scan:
+    runs-on: ubuntu-latest
+    needs: trufflehog_scan
+    steps:
+      - name: Run Semgrep
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/src returntocorp/semgrep semgrep \
+            --config="p/r2c-ci" \
+            --sarif --output /src/semgrep.sarif /src
+
+      - name: Upload Semgrep SARIF report
+        uses: actions/upload-artifact@v2
+        with:
+          name: semgrep-sarif-report
+          path: semgrep.sarif
