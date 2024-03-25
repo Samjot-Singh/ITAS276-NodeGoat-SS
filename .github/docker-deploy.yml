@@ -1,93 +1,93 @@
-# This updated YAML file will:
-
-# Check out the repository.
-# Install Docker on the runner.
-# Build the Docker image for NodeGoat.
-# Start a Docker container with the built image.
-# Test the deployment by displaying the username and listing the running Docker containers.
-
-name: Build, deploy, and scan NodeGoat on WMD Docker servers
+name: DevSecOps Pipeline
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
 
 jobs:
-  deploy_and_scan:
-    name: Build, deploy, and scan NodeGoat on WMD server
-    runs-on: itas276-SamjotSingh
+  SAST-Semgrep:
+    name: SAST Semgrep Scan
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+    steps:   
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
+      - name: Run Semgrep SAST scan
+        run: |
+          semgrep \
+          --sarif --output semgrep-sast-report.sarif \
+          --config="p/default" \
+          --exclude="node_modules/*"
+      - name: Save Semgrep SAST report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-sast-report
+          path: semgrep-sast-report.sarif
+
+  SCA-Snyk:
+    name: SCA Scan with Snyk
+    runs-on: ubuntu-latest
+    container:
+      image: snyk/snyk-cli:docker
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
+      - name: Authenticate with Snyk
+        run: snyk auth "3280d6a3-2a71-4aba-8f44-9c6debcec093"
 
-      - name: Build Docker Image
+      - name: Run Snyk SCA scan
         run: |
-          docker build -t nodegoat-image .
+          snyk test --all-projects --json > snyk-sca-report.json || true
+      - name: Convert Snyk SCA JSON report to SARIF
+        run: |
+          npm install -g snyk-to-sarif
+          snyk-to-sarif --input snyk-sca-report.json --output snyk-sca-report.sarif
+      - name: Save Snyk SCA report as pipeline artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: snyk-sca-report
+          path: snyk-sca-report.sarif
 
-      - name: Start Docker Container
-        run: |
-          docker run -d -p 40403:4000 --name nodegoat-container nodegoat-image
-
-      - name: Test Deployment
-        run: |
-          whoami
-          docker ps
+  TruffleHog:
+    name: TruffleHog Scan
+    runs-on: ubuntu-latest
+    needs: [SAST-Semgrep, SCA-Snyk]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Install TruffleHog
-        run: |
-          echo "Installing TruffleHog..."
-          pip install trufflehog
+        run: pip install trufflehog
 
       - name: Run TruffleHog Scan
-        run: |
-          echo "Running TruffleHog Scan..."
-          trufflehog --json > trufflehog-report.json
+        run: trufflehog .
+        continue-on-error: true
+        # This continues the workflow even if trufflehog fails
 
-      - name: Save TruffleHog Report as Artifact
-        uses: actions/upload-artifact@v2
+      - name: Save TruffleHog report as pipeline artifact
+        run: trufflehog . > trufflehog-report.txt
+        continue-on-error: true
+        # This continues the workflow even if trufflehog fails
+
+      - name: Save TruffleHog report as pipeline artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: trufflehog-scan-report
-          path: trufflehog-report.json
+          name: trufflehog-report
+          path: trufflehog-report.txt
 
-      - name: Install Semgrep
-        run: |
-          echo "Installing Semgrep..."
-          curl -L https://semgrep.dev/install.sh | bash
-
-      - name: Run Semgrep SAST Scan
-        run: |
-          echo "Running Semgrep SAST Scan..."
-          semgrep --sarif sast-report.sarif .
-
-      - name: Save Semgrep SARIF Report as Artifact
-        uses: actions/upload-artifact@v2
+  SARIF-Viewer:
+    name: SARIF Report Viewer
+    runs-on: ubuntu-latest
+    needs: [SAST-Semgrep, SCA-Snyk, TruffleHog]
+    steps:
+      - name: Download Semgrep SAST report
+        uses: actions/download-artifact@v2
         with:
-          name: semgrep-scan-report
-          path: sast-report.sarif
-
-      - name: Install Snyk
-        run: |
-          echo "Installing Snyk..."
-          npm install -g snyk
-
-      - name: Run Snyk SCA Scan
-        run: |
-          echo "Running Snyk SCA Scan..."
-          snyk test --all-projects --sarif -o snyk-report.sarif --token=1acc1c7a-6467-47bb-8756-7919cd0fd7a5
-
-      - name: Save Snyk SARIF Report as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: snyk-scan-report
-          path: snyk-report.sarif
-
+          name: semgrep-sast-report
+          path: sarif-reports
 
 
