@@ -89,5 +89,3 @@ jobs:
         with:
           name: semgrep-sast-report
           path: sarif-reports
-
-
