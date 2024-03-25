@@ -49,6 +49,12 @@ jobs:
         run: |
           semgrep --sarif sast-report.sarif .
 
+      - name: Save Semgrep SARIF Report as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: semgrep-sarif-report
+          path: sast-report.sarif
+
       - name: Install Snyk
         run: |
           npm install -g snyk
@@ -56,4 +62,11 @@ jobs:
       - name: Run Snyk SCA Scan
         run: |
           snyk test --all-projects --sarif -o snyk-report.sarif
+
+      - name: Save Snyk SARIF Report as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: snyk-sarif-report
+          path: snyk-report.sarif
+
 
