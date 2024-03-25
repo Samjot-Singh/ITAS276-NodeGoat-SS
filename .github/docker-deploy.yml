@@ -43,10 +43,12 @@ jobs:
 
       - name: Install Semgrep
         run: |
+          echo "Installing Semgrep..."
           curl -L https://semgrep.dev/install.sh | bash
 
       - name: Run Semgrep SAST Scan
         run: |
+          echo "Running Semgrep SAST Scan..."
           semgrep --sarif sast-report.sarif .
 
       - name: Save Semgrep SARIF Report as Artifact
@@ -57,10 +59,12 @@ jobs:
 
       - name: Install Snyk
         run: |
+          echo "Installing Snyk..."
           npm install -g snyk
 
       - name: Run Snyk SCA Scan
         run: |
+          echo "Running Snyk SCA Scan..."
           snyk test --all-projects --sarif -o snyk-report.sarif
 
       - name: Save Snyk SARIF Report as Artifact
@@ -68,5 +72,3 @@ jobs:
         with:
           name: snyk-sarif-report
           path: snyk-report.sarif
-
-
