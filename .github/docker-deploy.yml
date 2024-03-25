@@ -2,14 +2,14 @@ name: Build, deploy, and scan NodeGoat on WMD Docker servers
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   SAST-Semgrep:
     name: SAST Semgrep Scan
-    runs-on: itas276-SamjotSingh
+    runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
     steps:   
