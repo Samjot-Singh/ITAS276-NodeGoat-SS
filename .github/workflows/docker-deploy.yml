@@ -89,4 +89,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: semgrep-sast-report
-          path: sarif-reports
+          path: sarif-report
+      - name: Copy SARIF file
+        run: cp sarif-report/semgrep-sast-report.sarif .
+      - name: Save SARIF report as pipeline artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: semgrep-sarif-report
+          path: semgrep-sast-report.sarif
