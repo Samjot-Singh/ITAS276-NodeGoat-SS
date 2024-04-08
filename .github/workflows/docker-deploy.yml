@@ -12,23 +12,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Discord Notification start
-        uses: tsickert/discord-webhook@v5.3.0
+        uses: discordjs/discord.js@v3
         with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          username: ${{ github.repository }}
-          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-          embed-title: "E2E Test Job is starting..."
-          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          embed-author-name: "${{ github.actor }}"
-
-      - name: Discord Notification for completion of E2E Test
-        uses: discord/action@v2
-        with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: |
-            E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif) You can view the full workflow run [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            E2E Test Job is starting...
+            Action details: [View details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            Triggered by: ${{ github.actor }}
+
+      - name: Run E2E Test
+        # Add your E2E test steps here
+
+      - name: Discord Notification for completion of E2E Test
+        uses: discordjs/discord.js@v3
+        with:
+          type: text
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: |
+            E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif)
+            Full workflow run: [View workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
   SAST-Semgrep:
     name: SAST Semgrep Scan
@@ -38,8 +43,9 @@ jobs:
     needs: [E2E-Test-Discord]
     steps:   
       - name: Notify start of SAST Semgrep Scan
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Starting SAST Semgrep Scan"
@@ -59,8 +65,9 @@ jobs:
           name: semgrep-sast-report
           path: semgrep-sast-report.sarif
       - name: Notify completion of SAST Semgrep Scan
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Completed SAST Semgrep Scan"
@@ -73,8 +80,9 @@ jobs:
     needs: [SAST-Semgrep]
     steps:
       - name: Notify start of SCA Scan with Snyk
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Starting SCA Scan with Snyk"
@@ -98,8 +106,9 @@ jobs:
           name: snyk-sca-report
           path: snyk-sca-report.sarif
       - name: Notify completion of SCA Scan with Snyk
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Completed SCA Scan with Snyk"
@@ -110,8 +119,9 @@ jobs:
     needs: [SCA-Snyk]
     steps:
       - name: Notify start of TruffleHog Scan
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Starting TruffleHog Scan"
@@ -138,8 +148,9 @@ jobs:
           name: trufflehog-report
           path: trufflehog-report.txt
       - name: Notify completion of TruffleHog Scan
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Completed TruffleHog Scan"
@@ -162,8 +173,10 @@ jobs:
           name: semgrep-sarif-report
           path: semgrep-sast-report.sarif
       - name: Notify completion of SARIF Report Viewer
-        uses: discord/action@v2
+        uses: discordjs/discord.js@v3
         with:
+          type: text
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN}}
           content: "Completed SARIF Report Viewer"
+
