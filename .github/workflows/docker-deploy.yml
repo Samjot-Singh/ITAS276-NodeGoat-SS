@@ -7,11 +7,35 @@ on:
     branches: [ "master" ]
 
 jobs:
+  E2E-Test-Discord:
+    name: E2E Test and Discord Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord Notification start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{ github.repository }}
+          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
+          embed-title: "E2E Test Job is starting..."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.actor }}"
+
+      - name: Discord Notification for completion of E2E Test
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: |
+            E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif) You can view the full workflow run [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
   SAST-Semgrep:
     name: SAST Semgrep Scan
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
+    needs: [E2E-Test-Discord]
     steps:   
       - name: Notify start of SAST Semgrep Scan
         uses: discord/action@v2
@@ -46,6 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: snyk/snyk-cli:docker
+    needs: [SAST-Semgrep]
     steps:
       - name: Notify start of SCA Scan with Snyk
         uses: discord/action@v2
@@ -82,7 +107,7 @@ jobs:
   TruffleHog:
     name: TruffleHog Scan
     runs-on: ubuntu-latest
-    needs: [SAST-Semgrep, SCA-Snyk]
+    needs: [SCA-Snyk]
     steps:
       - name: Notify start of TruffleHog Scan
         uses: discord/action@v2
@@ -122,7 +147,7 @@ jobs:
   SARIF-Viewer:
     name: SARIF Report Viewer
     runs-on: ubuntu-latest
-    needs: [SAST-Semgrep, SCA-Snyk, TruffleHog]
+    needs: [TruffleHog]
     steps:
       - name: Download Semgrep SAST report
         uses: actions/download-artifact@v2
@@ -142,27 +167,3 @@ jobs:
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN}}
           content: "Completed SARIF Report Viewer"
-
-  E2E-Test-Discord:
-    name: E2E Test and Discord Notification
-    runs-on: ubuntu-latest
-    needs: [SARIF-Viewer]
-    steps:
-      - name: Discord Notification start
-        uses: tsickert/discord-webhook@v5.3.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          username: ${{ github.repository }}
-          avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-          embed-title: "E2E Test Job is starting..."
-          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          embed-author-name: "${{ github.actor }}"
-      
-      - name: Discord Notification for completion of E2E Test
-        uses: discord/action@v2
-        with:
-          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
-          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
-          content: |
-            E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif) You can view the full workflow run [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
