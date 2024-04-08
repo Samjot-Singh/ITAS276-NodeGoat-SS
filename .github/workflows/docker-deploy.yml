@@ -22,9 +22,6 @@ jobs:
             Action details: [View details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
             Triggered by: ${{ github.actor }}
 
-      - name: Run E2E Test
-        # Add your E2E test steps here
-
       - name: Discord Notification for completion of E2E Test
         uses: discordjs/discord.js@v3
         with:
@@ -179,4 +176,3 @@ jobs:
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN}}
           content: "Completed SARIF Report Viewer"
-
