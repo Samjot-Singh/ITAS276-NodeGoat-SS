@@ -2,7 +2,7 @@ name: E2E Test
 on: [push, pull_request]
 
 jobs:
-    # Post a message to the ITAS Discord channel with pipeline updates.
+  
     Discord-Begin:
       runs-on: ubuntu-latest
       steps:
