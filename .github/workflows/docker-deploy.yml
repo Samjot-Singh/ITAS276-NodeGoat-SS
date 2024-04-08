@@ -17,10 +17,10 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           username: ${{github.repository}}
           avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-          embed-title: "Security Pipeline jobs are starting..."
+          embed-title: "${{ github.actor }}"
+          embed-description: "Security Pipeline jobs are starting..."
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-          embed-author-name: "${{ github.triggering_actor }}"
+          embed-fields: "Action details ${{ github.run_id }}"
 
   SAST-Semgrep:
     name: SAST Semgrep Scan
@@ -55,6 +55,7 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SAST Semgrep Scan"
           embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif)"
+          embed-fields: "Action details ${{ github.run_id }}"
 
   SCA-Snyk:
     name: SCA Scan with Snyk
@@ -93,6 +94,7 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SCA Scan with Snyk"
           embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/snyk-sarif-report/snyk-sca-report.sarif)"
+          embed-fields: "Action details ${{ github.run_id }}"
 
   TruffleHog:
     name: TruffleHog Scan
@@ -132,18 +134,13 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed TruffleHog Scan"
           embed-description: "[Download TruffleHog Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/trufflehog-report/trufflehog-report.txt)"
+          embed-fields: "Action details ${{ github.run_id }}"
 
   SARIF-Viewer:
     name: SARIF Report Viewer
     runs-on: ubuntu-latest
     needs: [SAST-Semgrep, SCA-Snyk, TruffleHog]
     steps:
-      - name: Notify start of SARIF Report Viewer
-        uses: tsickert/discord-webhook@v5.3.0
-        with:
-          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          content: "Starting SARIF Report Viewer"
-          
       - name: Download Semgrep SAST report
         uses: actions/download-artifact@v2
         with:
@@ -162,3 +159,4 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SARIF Report Viewer"
           embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif)"
+          embed-fields: "Action details ${{ github.run_id }}"
