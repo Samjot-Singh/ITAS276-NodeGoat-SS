@@ -159,6 +159,7 @@ jobs:
           embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           embed-author-name: "${{ github.actor }}"
       - name: Run E2E Test
+      # Add your E2E test steps here
       - name: Discord Notification for completion of E2E Test
         uses: discord/action@v2
         with:
@@ -166,3 +167,5 @@ jobs:
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: |
             E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif) You can view the full workflow run [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+    
+ 
