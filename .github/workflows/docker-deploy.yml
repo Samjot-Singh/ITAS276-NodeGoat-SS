@@ -143,7 +143,7 @@ jobs:
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
           content: "Completed SARIF Report Viewer"
 
-    E2E-Test-Discord:
+  E2E-Test-Discord:
     name: E2E Test and Discord Notification
     runs-on: ubuntu-latest
     needs: [SARIF-Viewer]
