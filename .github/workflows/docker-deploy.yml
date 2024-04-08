@@ -179,4 +179,3 @@ jobs:
           webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
           webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN}}
           content: "Completed SARIF Report Viewer"
-
