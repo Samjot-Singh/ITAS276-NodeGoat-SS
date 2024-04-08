@@ -16,6 +16,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Notify start of SAST Semgrep Scan
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Starting SAST Semgrep Scan"
+          
       - name: Run Semgrep SAST scan
         run: |
           semgrep \
@@ -27,6 +34,12 @@ jobs:
         with:
           name: semgrep-sast-report
           path: semgrep-sast-report.sarif
+      - name: Notify completion of SAST Semgrep Scan
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Completed SAST Semgrep Scan"
 
   SCA-Snyk:
     name: SCA Scan with Snyk
@@ -37,6 +50,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Notify start of SCA Scan with Snyk
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Starting SCA Scan with Snyk"
+          
       - name: Authenticate with Snyk
         run: snyk auth "3280d6a3-2a71-4aba-8f44-9c6debcec093"
 
@@ -52,6 +72,12 @@ jobs:
         with:
           name: snyk-sca-report
           path: snyk-sca-report.sarif
+      - name: Notify completion of SCA Scan with Snyk
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Completed SCA Scan with Snyk"
 
   TruffleHog:
     name: TruffleHog Scan
@@ -61,6 +87,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Notify start of TruffleHog Scan
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Starting TruffleHog Scan"
+          
       - name: Install TruffleHog
         run: pip install trufflehog
 
@@ -79,6 +112,12 @@ jobs:
         with:
           name: trufflehog-report
           path: trufflehog-report.txt
+      - name: Notify completion of TruffleHog Scan
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Completed TruffleHog Scan"
 
   SARIF-Viewer:
     name: SARIF Report Viewer
@@ -97,8 +136,14 @@ jobs:
         with:
           name: semgrep-sarif-report
           path: semgrep-sast-report.sarif
+      - name: Notify completion of SARIF Report Viewer
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "Completed SARIF Report Viewer"
 
-  E2E-Test-Discord:
+    E2E-Test-Discord:
     name: E2E Test and Discord Notification
     runs-on: ubuntu-latest
     needs: [SARIF-Viewer]
@@ -113,5 +158,10 @@ jobs:
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           embed-author-name: "${{ github.actor }}"
-      # Add more steps for your E2E test job here
+      - name: Discord Notification for completion of E2E Test
+        uses: discord/action@v2
+        with:
+          webhook-id: ${{ secrets.DISCORD_WEBHOOK_ID }}
+          webhook-token: ${{ secrets.DISCORD_WEBHOOK_TOKEN }}
+          content: "E2E Test completed. Here is the SARIF report: [Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif) You can view the full workflow run [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
 
