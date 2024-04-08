@@ -17,7 +17,10 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           username: ${{github.repository}}
           avatar-url: https://gravatar.com/avatar/be5d3fe06696117c467f199ddb4f1aed?s=400&d=robohash&r=g
-          content: "Security Pipeline jobs are starting..."
+          embed-title: "Security Pipeline jobs are starting..."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
 
   SAST-Semgrep:
     name: SAST Semgrep Scan
@@ -51,6 +54,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SAST Semgrep Scan"
+          embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif)"
 
   SCA-Snyk:
     name: SCA Scan with Snyk
@@ -88,6 +92,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SCA Scan with Snyk"
+          embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/snyk-sarif-report/snyk-sca-report.sarif)"
 
   TruffleHog:
     name: TruffleHog Scan
@@ -126,6 +131,7 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed TruffleHog Scan"
+          embed-description: "[Download TruffleHog Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/trufflehog-report/trufflehog-report.txt)"
 
   SARIF-Viewer:
     name: SARIF Report Viewer
@@ -155,3 +161,4 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           content: "Completed SARIF Report Viewer"
+          embed-description: "[Download SARIF Report](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/semgrep-sarif-report/semgrep-sast-report.sarif)"
